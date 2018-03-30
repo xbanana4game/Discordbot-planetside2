@@ -1,0 +1,39 @@
+ <configuration>
++    <!-- jul-to-slf4j の対応 ここから -->
++    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
++        <resetJUL>true</resetJUL>
++    </contextListener>
++    <!-- ここまで -->
+
+     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+         <encoder>
+             <pattern>%d{HH:mm:ss.SSS} %-5level %logger{50} - %msg%n</pattern>
+         </encoder>
+     </appender>
+
+	<appender name="FILE" class="ch.qos.logback.core.FileAppender">
+		<file>ps2bot.log</file>
+		<encoder>
+			<pattern>%date %level [%thread] %logger{10} [%file:%line] %msg%n
+			</pattern>
+		</encoder>
+	</appender>
+
+     <logger name="jp.banana.planetside2.api" level="INFO" additivity="false">
+	     <appender-ref ref="FILE" />
+     </logger>
+     <logger name="jp.banana.planetside2.command" level="ERROR" additivity="false">
+     	<appender-ref ref="STDOUT" />
+	    <appender-ref ref="FILE" />
+     </logger>
+     <logger name="jp.banana.planetside2.streaming" level="DEBUG" additivity="false">
+    	<appender-ref ref="STDOUT" />
+     	<appender-ref ref="FILE" />
+     </logger>
+     
+     <logger name="de.btobastian" level="ERROR"/>
+
+     <root level="ERROR">
+         <appender-ref ref="STDOUT" />
+     </root>
+ </configuration>

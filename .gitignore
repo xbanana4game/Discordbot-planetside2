@@ -1,0 +1,4 @@
+*.class
+/ps2bot.log
+/discord.conf
+*.jar
