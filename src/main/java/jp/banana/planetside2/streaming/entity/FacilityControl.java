@@ -1,4 +1,4 @@
-package jp.banana.planetside2.entity;
+package jp.banana.planetside2.streaming.entity;
 
 public class FacilityControl {
     /*

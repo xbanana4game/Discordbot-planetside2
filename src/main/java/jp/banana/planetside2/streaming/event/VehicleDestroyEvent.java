@@ -1,7 +1,7 @@
 package jp.banana.planetside2.streaming.event;
 
-import java.util.EventListener;
+import jp.banana.planetside2.streaming.entity.VehicleDestroy;
 
 public interface VehicleDestroyEvent extends EventListener{
-	public void event(String message);
+	public void event(VehicleDestroy vd);
 }

@@ -3,9 +3,9 @@ package jp.banana.planetside2.api;
 import javax.websocket.ClientEndpoint;
 
 import de.btobastian.javacord.entities.Channel;
-import jp.banana.planetside2.entity.FacilityControl;
 import jp.banana.planetside2.entity.Faction;
 import jp.banana.planetside2.streaming.Planetside2EventStreaming;
+import jp.banana.planetside2.streaming.entity.FacilityControl;
 
 @ClientEndpoint
 public class FacilityControlClient extends Planetside2EventStreaming {
@@ -37,7 +37,7 @@ public class FacilityControlClient extends Planetside2EventStreaming {
     	boolean isDefend = false;
     	boolean isVS = false;
         
-        FacilityControl facility_control = Planetside2API.parseFacilityControl(message);
+        FacilityControl facility_control = parseFacilityControl(message);
         
         //VSŠÖ˜A
         if((facility_control.old_faction_id==1) || (facility_control.new_faction_id==1)){

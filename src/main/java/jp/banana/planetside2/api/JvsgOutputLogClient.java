@@ -5,8 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jp.banana.planetside2.command.Planetside2BotCommand;
-import jp.banana.planetside2.entity.VehicleDestroy;
 import jp.banana.planetside2.streaming.Planetside2EventStreaming;
+import jp.banana.planetside2.streaming.entity.VehicleDestroy;
 import de.btobastian.javacord.entities.Channel;
 
 @ClientEndpoint
@@ -24,7 +24,7 @@ public class JvsgOutputLogClient extends Planetside2EventStreaming {
 
 	@Override
 	public String getOutputMsg(String message) {
-        VehicleDestroy vd = VehicleDestroy.parseVehicleDestroy(message);
+        VehicleDestroy vd = parseVehicleDestroy(message);
         if(vd==null) {
         	System.err.println("parseVehicleDestroy error");
         	return null;

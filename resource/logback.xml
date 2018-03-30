@@ -26,7 +26,7 @@
      	<appender-ref ref="STDOUT" />
 	    <appender-ref ref="FILE" />
      </logger>
-     <logger name="jp.banana.planetside2.streaming" level="DEBUG" additivity="false">
+     <logger name="jp.banana.planetside2.streaming" level="INFO" additivity="false">
     	<appender-ref ref="STDOUT" />
      	<appender-ref ref="FILE" />
      </logger>

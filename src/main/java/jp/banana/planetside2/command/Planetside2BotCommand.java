@@ -9,6 +9,7 @@ import java.util.List;
 import jp.banana.planetside2.api.JvsgOutputLogClient;
 import jp.banana.planetside2.api.Planetside2API;
 import jp.banana.planetside2.streaming.Planetside2EventStreaming;
+import jp.banana.planetside2.streaming.entity.VehicleDestroy;
 import jp.banana.planetside2.streaming.event.VehicleDestroyEvent;
 import de.btobastian.javacord.DiscordAPI;
 import de.btobastian.javacord.entities.Channel;
@@ -68,10 +69,11 @@ public class Planetside2BotCommand implements MessageCreateListener {
             	ouput_channel = message.getChannelReceiver();
             	client = new JvsgOutputLogClient(ouput_channel);
             	client.addListener(new VehicleDestroyEvent() {
-					
-					public void event(String m) {
-//						System.out.println(m);
+
+					public void event(VehicleDestroy vd) {
+//						System.out.println(vd);
 					}
+            		
 				});
             	
             	if(outputSundyOnly) {

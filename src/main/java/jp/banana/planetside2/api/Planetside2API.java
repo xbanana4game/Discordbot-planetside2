@@ -19,10 +19,10 @@ import jp.banana.planetside2.command.ApiCommandBuilder;
 import jp.banana.planetside2.command.ApiCommandBuilder.NAMESPACE;
 import jp.banana.planetside2.entity.CharacterInfo;
 import jp.banana.planetside2.entity.Facility;
-import jp.banana.planetside2.entity.FacilityControl;
 import jp.banana.planetside2.entity.Outfit;
 import jp.banana.planetside2.entity.Vehicle;
 import jp.banana.planetside2.entity.Weapon;
+import jp.banana.planetside2.streaming.entity.FacilityControl;
 
 public class Planetside2API {
 	private static Planetside2API singleton = new Planetside2API();
@@ -211,25 +211,6 @@ public class Planetside2API {
 		return fc;
 	}
 	
-    public static FacilityControl parseFacilityControl(String data) {
-        JSONObject json = new JSONObject(data);
-        FacilityControl fc = new FacilityControl();
-        
-        String event_name = json.getJSONObject("payload").getString("event_name");
-        if(event_name.equals("FacilityControl")) {
-        	fc.duration_held = json.getJSONObject("payload").getString("duration_held");
-        	fc.event_name = json.getJSONObject("payload").getString("event_name");
-            fc.facility_id = json.getJSONObject("payload").getInt("facility_id");
-            fc.new_faction_id = json.getJSONObject("payload").getInt("new_faction_id");
-            fc.old_faction_id = json.getJSONObject("payload").getInt("old_faction_id");
-            fc.outfit_id = json.getJSONObject("payload").getString("outfit_id");
-            fc.timestamp = json.getJSONObject("payload").getString("timestamp");
-            fc.world_id = json.getJSONObject("payload").getInt("world_id");
-            fc.zone_id = json.getJSONObject("payload").getInt("zone_id");
-        }
-
-		return fc;
-	}
     
 	public static String getCharacterName(String id) throws Exception {
 		CharacterInfo chara = new CharacterInfo();

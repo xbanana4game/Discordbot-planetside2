@@ -2,7 +2,6 @@ package jp.banana.planetside2.streaming;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.EventListener;
 import java.util.List;
 
 import javax.websocket.ContainerProvider;
@@ -14,15 +13,15 @@ import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 
 import jp.banana.discordbot.BotConfig;
-import jp.banana.planetside2.api.Planetside2API;
+import jp.banana.planetside2.streaming.entity.FacilityControl;
+import jp.banana.planetside2.streaming.entity.VehicleDestroy;
+import jp.banana.planetside2.streaming.event.EventListener;
 import jp.banana.planetside2.streaming.event.FacilityControlEvent;
 import jp.banana.planetside2.streaming.event.VehicleDestroyEvent;
 
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.util.concurrent.Service.Listener;
 
 import de.btobastian.javacord.entities.Channel;
 
@@ -73,7 +72,7 @@ abstract public class Planetside2EventStreaming extends Thread {
 
 	@OnOpen
     public void onOpen(Session session) {
-        System.err.println("[セッション確立]");
+		logger.debug("[セッション確立]");
     }
     
     @OnMessage
@@ -89,7 +88,8 @@ abstract public class Planetside2EventStreaming extends Thread {
 			if(event_name.equals("VehicleDestroy")) {
 				for(EventListener l:listeners) {
 					if(l instanceof VehicleDestroyEvent) {
-						((VehicleDestroyEvent) l).event(message);
+						VehicleDestroy vd = parseVehicleDestroy(message);
+						((VehicleDestroyEvent) l).event(vd);
 					}
 				}
 			} else if(event_name.equals("FacilityControl")) {
@@ -130,9 +130,58 @@ abstract public class Planetside2EventStreaming extends Thread {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-            System.err.println("open");
+            logger.debug("open");
         }
-        System.err.println("end");
+        logger.debug("end");
+	}
+	
+	public VehicleDestroy parseVehicleDestroy(String data) {
+		VehicleDestroy vd = new VehicleDestroy();
+		
+		JSONObject json = new JSONObject(data);
+		vd.event_name = json.getJSONObject("payload").getString("event_name");
+//		System.out.println("event_name is "+vd.event_name);
+		if(vd.event_name.equals("VehicleDestroy")){
+			vd.attacker_character_id = json.getJSONObject("payload").getString("attacker_character_id");
+			vd.attacker_loadout_id = json.getJSONObject("payload").getInt("attacker_loadout_id");
+			vd.attacker_vehicle_id = json.getJSONObject("payload").getInt("attacker_vehicle_id");
+			vd.attacker_weapon_id = json.getJSONObject("payload").getInt("attacker_weapon_id");
+			vd.character_id = json.getJSONObject("payload").getString("character_id");
+			vd.event_name = json.getJSONObject("payload").getString("event_name");
+			vd.facility_id = json.getJSONObject("payload").getInt("facility_id");
+			vd.faction_id = json.getJSONObject("payload").getInt("faction_id");
+			vd.timestamp = json.getJSONObject("payload").getString("timestamp");
+			vd.vehicle_id = json.getJSONObject("payload").getInt("vehicle_id");
+			vd.world_id = json.getJSONObject("payload").getInt("world_id");
+			vd.zone_id = json.getJSONObject("payload").getInt("zone_id");
+
+			vd.service = json.getString("service");
+			vd.type = json.getString("type");
+		} else {
+			return null;
+		}
+	
+		return vd;
+	}
+	
+    public FacilityControl parseFacilityControl(String data) {
+        JSONObject json = new JSONObject(data);
+        FacilityControl fc = new FacilityControl();
+        
+        String event_name = json.getJSONObject("payload").getString("event_name");
+        if(event_name.equals("FacilityControl")) {
+        	fc.duration_held = json.getJSONObject("payload").getString("duration_held");
+        	fc.event_name = json.getJSONObject("payload").getString("event_name");
+            fc.facility_id = json.getJSONObject("payload").getInt("facility_id");
+            fc.new_faction_id = json.getJSONObject("payload").getInt("new_faction_id");
+            fc.old_faction_id = json.getJSONObject("payload").getInt("old_faction_id");
+            fc.outfit_id = json.getJSONObject("payload").getString("outfit_id");
+            fc.timestamp = json.getJSONObject("payload").getString("timestamp");
+            fc.world_id = json.getJSONObject("payload").getInt("world_id");
+            fc.zone_id = json.getJSONObject("payload").getInt("zone_id");
+        }
+
+		return fc;
 	}
 	
     /**
@@ -148,7 +197,7 @@ abstract public class Planetside2EventStreaming extends Thread {
 
     @OnClose
     public void onClose(Session session) {
-    	System.out.println(session.getId() + " was closed.");
+    	logger.debug(session.getId() + " was closed.");
     }
     
     public void closeSession() {
