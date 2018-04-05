@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 
 import jp.banana.planetside2.command.Planetside2BotCommand;
 import jp.banana.planetside2.streaming.Planetside2EventStreaming;
+import jp.banana.planetside2.streaming.StreamingCommandBuilder;
+import jp.banana.planetside2.streaming.StreamingCommandBuilder.EVENTNAME;
 import jp.banana.planetside2.streaming.entity.VehicleDestroy;
 import de.btobastian.javacord.entities.Channel;
 
@@ -19,7 +21,12 @@ public class JvsgOutputLogClient extends Planetside2EventStreaming {
 
 	@Override
 	public String setCommand() {
-		return "{\"service\":\"event\",\"action\":\"subscribe\",\"worlds\":[\"1\"],\"characters\":[\"all\"],\"eventNames\":[\"VehicleDestroy\"]}";
+		StreamingCommandBuilder sc = new StreamingCommandBuilder();
+		sc = sc.addEventNames(EVENTNAME.VehicleDestroy);
+		sc = sc.addCharacters("all");
+		sc = sc.addWorlds(1);
+		String command = sc.build();
+		return command;
 	}
 
 	@Override

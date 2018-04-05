@@ -5,30 +5,27 @@ import javax.websocket.ClientEndpoint;
 import de.btobastian.javacord.entities.Channel;
 import jp.banana.planetside2.entity.Faction;
 import jp.banana.planetside2.streaming.Planetside2EventStreaming;
+import jp.banana.planetside2.streaming.StreamingCommandBuilder;
+import jp.banana.planetside2.streaming.StreamingCommandBuilder.EVENTNAME;
 import jp.banana.planetside2.streaming.entity.FacilityControl;
 
 @ClientEndpoint
 public class FacilityControlClient extends Planetside2EventStreaming {
 
-	private boolean connery;
 	private boolean outputCaptue;
 	private boolean outputVsOnly;
 
 	public FacilityControlClient(Channel api) {
 		super(api);
-		connery = true;
 		outputVsOnly = true;
 		outputCaptue = true;
 	}
 
 	@Override
 	public String setCommand() {
-		String command = "";
-        if(connery==true) {
-            command = "{\"service\":\"event\",\"action\":\"subscribe\",\"worlds\":[\"1\"],\"eventNames\":[\"FacilityControl\"]}";
-        } else {
-        	command = "{\"service\":\"event\",\"action\":\"subscribe\",\"worlds\":[\"1\",\"9\",\"10\",\"11\",\"13\",\"17\",\"18\",\"19\",\"25\",\"1000\",\"1001\"],\"eventNames\":[\"FacilityControl\"]}";
-        }
+		StreamingCommandBuilder sc = new StreamingCommandBuilder().addEventNames(EVENTNAME.FacilityControl);
+		sc = sc.addWorlds(1);
+		String command = sc.build();
 		return command;
 	}
 

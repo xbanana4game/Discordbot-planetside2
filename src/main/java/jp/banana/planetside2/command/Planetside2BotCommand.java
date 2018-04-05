@@ -9,6 +9,7 @@ import java.util.List;
 import jp.banana.planetside2.api.JvsgOutputLogClient;
 import jp.banana.planetside2.api.Planetside2API;
 import jp.banana.planetside2.streaming.Planetside2EventStreaming;
+import jp.banana.planetside2.streaming.StreamingCommandBuilder;
 import jp.banana.planetside2.streaming.entity.VehicleDestroy;
 import jp.banana.planetside2.streaming.event.VehicleDestroyEvent;
 import de.btobastian.javacord.DiscordAPI;
@@ -148,6 +149,23 @@ public class Planetside2BotCommand implements MessageCreateListener {
         		str.append("output_channel_list: "+c.getName()+"\n");
         	}
         	message.reply(str.toString());
+        }
+        
+        if (message.getContent().equalsIgnoreCase("!ps2bot clear")) {
+        	if(running) {
+        		String command = new StreamingCommandBuilder().clearCommand().build();
+        		client.sendCommand(command);
+        	}
+        }
+        
+        if (message.getContent().equalsIgnoreCase("!ps2bot echo")) {
+        	if(running) {
+//        		String command = StreamingCommandBuilder.echoCommand();
+        		StreamingCommandBuilder sc = new StreamingCommandBuilder().help();
+        		String command = sc.build();
+        		System.out.println(command);
+        		client.sendCommand(command);
+        	}
         }
 	}
 

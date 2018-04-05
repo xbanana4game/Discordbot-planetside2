@@ -69,6 +69,17 @@ abstract public class Planetside2EventStreaming extends Thread {
     	this.api = api;
     	this.command = setCommand();
     }
+	
+	public void sendCommand(String command) {
+		if(session.isOpen()) {
+			try {
+				logger.debug("[Send]:"+command);
+				session.getBasicRemote().sendText(command);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
 	@OnOpen
     public void onOpen(Session session) {
@@ -95,7 +106,8 @@ abstract public class Planetside2EventStreaming extends Thread {
 			} else if(event_name.equals("FacilityControl")) {
 				for(EventListener l:listeners) {
 					if(l instanceof FacilityControlEvent) {
-						((FacilityControlEvent) l).event(message);
+						FacilityControl fc = parseFacilityControl(message);
+						((FacilityControlEvent) l).event(fc);
 					}
 				}
 			} else {
