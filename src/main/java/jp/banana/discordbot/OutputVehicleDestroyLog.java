@@ -1,26 +1,41 @@
-package jp.banana.planetside2.api;
+package jp.banana.discordbot;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.websocket.ClientEndpoint;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jp.banana.planetside2.api.Planetside2API;
 import jp.banana.planetside2.command.Planetside2BotCommand;
 import jp.banana.planetside2.streaming.Planetside2EventStreaming;
 import jp.banana.planetside2.streaming.StreamingCommandBuilder;
 import jp.banana.planetside2.streaming.StreamingCommandBuilder.EVENTNAME;
 import jp.banana.planetside2.streaming.entity.VehicleDestroy;
+import jp.banana.planetside2.streaming.event.VehicleDestroyEvent;
 import de.btobastian.javacord.entities.Channel;
 
-@ClientEndpoint
-public class JvsgOutputLogClient extends Planetside2EventStreaming {
-	private static Logger log = LoggerFactory.getLogger(JvsgOutputLogClient.class);
+public class OutputVehicleDestroyLog implements VehicleDestroyEvent {
+	private static Logger log = LoggerFactory.getLogger(OutputVehicleDestroyLog.class);
+	public List<Channel> channel_list = new ArrayList<Channel>();
 	
-	public JvsgOutputLogClient(Channel api) {
-		super(api);
+	public OutputVehicleDestroyLog() {
+	}
+	
+	public List<Channel> getChannel_list() {
+		return channel_list;
 	}
 
-	@Override
-	public String setCommand() {
+	public void setChannel_list(List<Channel> channel_list) {
+		this.channel_list = channel_list;
+	}
+	
+	public void addChannel(Channel c) {
+		this.channel_list.add(c);
+	}
+
+	public String getCommandText() {
 		StreamingCommandBuilder sc = new StreamingCommandBuilder();
 		sc = sc.addEventNames(EVENTNAME.VehicleDestroy);
 		sc = sc.addCharacters("all");
@@ -28,36 +43,8 @@ public class JvsgOutputLogClient extends Planetside2EventStreaming {
 		String command = sc.build();
 		return command;
 	}
-
-	@Override
-	public String getOutputMsg(String message) {
-        VehicleDestroy vd = parseVehicleDestroy(message);
-        if(vd==null) {
-        	System.err.println("parseVehicleDestroy error");
-        	return null;
-        }
-        
-        if(isOutput(vd)==false) {
-        	return null;
-        }
-        
-        boolean jvsg2 = Planetside2API.getSingleton().isJVSGMember(vd.character_id);
-        String outputMSG = "";
-        if(jvsg2==false) {
-        	outputMSG = getOutputMsg(vd);
-        } else {
-        	outputMSG = getOutputMsgDestroyed(vd);
-        }
-		return outputMSG;
-	}
 	
 	private boolean isOutput(VehicleDestroy vd) {
-        //サンダラー破壊のみ出力
-        if(Planetside2BotCommand.outputSundyOnly) {
-        	if(vd.vehicle_id!=2) {
-        		return false;
-        	}
-        }
         if(vd.vehicle_id>20) {
         	return false;
         }
@@ -120,5 +107,23 @@ public class JvsgOutputLogClient extends Planetside2EventStreaming {
 			e.printStackTrace();
 		}
 		return outputMSG;
+	}
+
+	public void event(VehicleDestroy vd) {
+        if(isOutput(vd)==false) {
+        	return;
+        }
+        
+        boolean jvsg2 = Planetside2API.getSingleton().isJVSGMember(vd.character_id);
+        String outputMSG = "";
+        if(jvsg2==false) {
+        	outputMSG = getOutputMsg(vd);
+        } else {
+        	outputMSG = getOutputMsgDestroyed(vd);
+        }
+        
+    	for(Channel c:channel_list) {
+    		c.sendMessage(outputMSG);
+    	}
 	}	
 }

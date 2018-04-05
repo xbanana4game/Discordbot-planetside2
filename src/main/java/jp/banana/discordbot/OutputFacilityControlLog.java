@@ -1,77 +1,37 @@
-package jp.banana.planetside2.api;
+package jp.banana.discordbot;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.websocket.ClientEndpoint;
 
 import de.btobastian.javacord.entities.Channel;
+import jp.banana.planetside2.api.Planetside2API;
 import jp.banana.planetside2.entity.Faction;
 import jp.banana.planetside2.streaming.Planetside2EventStreaming;
 import jp.banana.planetside2.streaming.StreamingCommandBuilder;
 import jp.banana.planetside2.streaming.StreamingCommandBuilder.EVENTNAME;
 import jp.banana.planetside2.streaming.entity.FacilityControl;
+import jp.banana.planetside2.streaming.entity.VehicleDestroy;
+import jp.banana.planetside2.streaming.event.FacilityControlEvent;
+import jp.banana.planetside2.streaming.event.VehicleDestroyEvent;
 
-@ClientEndpoint
-public class FacilityControlClient extends Planetside2EventStreaming {
-
+public class OutputFacilityControlLog implements FacilityControlEvent {
 	private boolean outputCaptue;
 	private boolean outputVsOnly;
+	public List<Channel> channel_list = new ArrayList<Channel>();
 
-	public FacilityControlClient(Channel api) {
-		super(api);
+	public OutputFacilityControlLog() {
 		outputVsOnly = true;
 		outputCaptue = true;
 	}
-
-	@Override
-	public String setCommand() {
+	public String getCommandText() {
 		StreamingCommandBuilder sc = new StreamingCommandBuilder().addEventNames(EVENTNAME.FacilityControl);
 		sc = sc.addWorlds(1);
 		String command = sc.build();
 		return command;
 	}
 
-	@Override
-	public String getOutputMsg(String message) {
-    	boolean isDefend = false;
-    	boolean isVS = false;
-        
-        FacilityControl facility_control = parseFacilityControl(message);
-        
-        //VS関連
-        if((facility_control.old_faction_id==1) || (facility_control.new_faction_id==1)){
-        	isVS = true;
-        } else {
-        	isVS = false;
-        }
-		
-		//防衛
-		if(facility_control.old_faction_id==facility_control.new_faction_id) {
-			isDefend = true;
-		} else {
-			isDefend = false;
-		}
-		
-		//出力判定
-		boolean is_output = true;
-		if(outputCaptue==true) {
-			if(isDefend==true) {
-				is_output = false;
-			}
-		}
-		if(outputVsOnly==true && isVS==false) {
-			if(isVS==false) {
-				is_output = false;
-			}
-		}
-
-		//メッセージ出力
-        if(is_output) {
-        	String msg = getOutputMsg(facility_control);
-        	return msg;
-        } else {
-        	return null;
-        }
-	}
-	
     /**
      * メッセージ作成
      * @param facility_control
@@ -115,6 +75,49 @@ public class FacilityControlClient extends Planetside2EventStreaming {
         }
         
 		return outputMSG;
+	}
+
+	public void event(FacilityControl fc) {
+    	boolean isDefend = false;
+    	boolean isVS = false;
+        
+        //VS関連
+        if((fc.old_faction_id==1) || (fc.new_faction_id==1)){
+        	isVS = true;
+        } else {
+        	isVS = false;
+        }
+		
+		//防衛
+		if(fc.old_faction_id==fc.new_faction_id) {
+			isDefend = true;
+		} else {
+			isDefend = false;
+		}
+		
+		//出力判定
+		boolean is_output = true;
+		if(outputCaptue==true) {
+			if(isDefend==true) {
+				is_output = false;
+			}
+		}
+		if(outputVsOnly==true && isVS==false) {
+			if(isVS==false) {
+				is_output = false;
+			}
+		}
+
+		//メッセージ出力
+        if(is_output) {
+        	String msg = getOutputMsg(fc);
+        	for(Channel c:channel_list) {
+        		c.sendMessage(msg);
+        	}
+        	return;
+        } else {
+        	return;
+        }
 	}
 
 }

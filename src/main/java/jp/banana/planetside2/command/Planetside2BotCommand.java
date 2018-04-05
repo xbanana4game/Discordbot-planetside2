@@ -6,11 +6,13 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import jp.banana.planetside2.api.JvsgOutputLogClient;
+import jp.banana.discordbot.OutputFacilityControlLog;
+import jp.banana.discordbot.OutputVehicleDestroyLog;
 import jp.banana.planetside2.api.Planetside2API;
 import jp.banana.planetside2.streaming.Planetside2EventStreaming;
 import jp.banana.planetside2.streaming.StreamingCommandBuilder;
 import jp.banana.planetside2.streaming.entity.VehicleDestroy;
+import jp.banana.planetside2.streaming.event.HeartbeatEvent;
 import jp.banana.planetside2.streaming.event.VehicleDestroyEvent;
 import de.btobastian.javacord.DiscordAPI;
 import de.btobastian.javacord.entities.Channel;
@@ -20,11 +22,19 @@ import de.btobastian.javacord.listener.message.MessageCreateListener;
 public class Planetside2BotCommand implements MessageCreateListener {
 
 	private boolean running;
-	private Channel ouput_channel;
 	private Planetside2EventStreaming client;
 	private Channel debug_channel = null;
+	OutputVehicleDestroyLog vehcleDestroyListener;
 	private List<Channel> output_channel_list = new ArrayList<Channel>();
-	public static boolean outputSundyOnly;
+	
+	public Planetside2BotCommand() {
+		client = new Planetside2EventStreaming();
+    	try {
+    		client.start();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
 	public void onMessageCreate(DiscordAPI api, Message message) {
 		if (message.getContent().equalsIgnoreCase("!ps2bot ping")) {
@@ -35,7 +45,7 @@ public class Planetside2BotCommand implements MessageCreateListener {
     	}
 		
 		if (message.getContent().equalsIgnoreCase("!ps2bot help")) {
-			message.reply("!ps2bot jvsglog/facility.csv/weapon.csv");
+			message.reply("!ps2bot outfitlog/facility.csv/weapon.csv");
 			message.reply("!ps2bot help/ping/debug/stat/join/disconnect");
 		}
 		
@@ -51,43 +61,18 @@ public class Planetside2BotCommand implements MessageCreateListener {
     		message.getChannelReceiver().sendFile(f);
     	}
 		
-        if (message.getContent().equalsIgnoreCase("!ps2bot jvsglog")) {
+        if (message.getContent().equalsIgnoreCase("!ps2bot outfitlog")) {
         	if(running==true) {
         		//起動済み
-        		if(outputSundyOnly) {
-        			outputSundyOnly = false;
-        		} else {
-        			outputSundyOnly = true;
-        		}
-            	if(outputSundyOnly) {
-                	message.reply("JVSG Sunderer破壊ログ出力");
-            	} else {
-                	message.reply("車両破壊ログ出力");
-            	}
         	} else {
             	running = true;
-            	String channel_name = message.getChannelReceiver().getName();
-            	ouput_channel = message.getChannelReceiver();
-            	client = new JvsgOutputLogClient(ouput_channel);
-            	client.addListener(new VehicleDestroyEvent() {
-
-					public void event(VehicleDestroy vd) {
-//						System.out.println(vd);
-					}
-            		
-				});
-            	
-            	if(outputSundyOnly) {
-                	message.reply("JVSG Sunderer破壊ログ出力 #"+channel_name);
-            	} else {
-                	message.reply("車両破壊ログ出力");
-            	}
-            	
-            	try {
-            		client.start();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+            	Channel ouput_channel = message.getChannelReceiver();
+            	output_channel_list.add(ouput_channel);
+            	vehcleDestroyListener = new OutputVehicleDestroyLog();
+            	vehcleDestroyListener.addChannel(ouput_channel);
+            	client.addListener(vehcleDestroyListener);
+            	client.sendCommand(vehcleDestroyListener.getCommandText());
+            	message.reply("車両破壊ログ出力");
         	}
         }
         
@@ -95,7 +80,6 @@ public class Planetside2BotCommand implements MessageCreateListener {
 			if (running == true) {
 				boolean isChannelExist = false;
 				Channel c = message.getChannelReceiver();
-				output_channel_list = client.getChannel_list();
 				for (Channel cc : output_channel_list) {
 					if (cc.getId() == c.getId()) {
 						message.reply("ps2bot is already joined");
@@ -106,7 +90,7 @@ public class Planetside2BotCommand implements MessageCreateListener {
 				if (!isChannelExist) {
 					message.reply("ps2bot join");
 					output_channel_list.add(c);
-					client.setChannel_list(output_channel_list);
+					vehcleDestroyListener.setChannel_list(output_channel_list);
 				}
 			}
         }
@@ -114,12 +98,11 @@ public class Planetside2BotCommand implements MessageCreateListener {
         if (message.getContent().equalsIgnoreCase("!ps2bot disconnect")) {
         	if(running==true) {
 				Channel c = message.getChannelReceiver();
-				output_channel_list = client.getChannel_list();
 				for (Channel cc : output_channel_list) {
 					if (cc.getId() == c.getId()) {
 						message.reply("ps2bot disconnected");
 						output_channel_list.remove(cc);
-						client.setChannel_list(output_channel_list);
+						vehcleDestroyListener.setChannel_list(output_channel_list);
 					}
 				}
 			}
@@ -141,7 +124,6 @@ public class Planetside2BotCommand implements MessageCreateListener {
         	StringBuilder str = new StringBuilder();
         	if(running) {
         		str.append("ps2bot jvsglog is running.\n");
-        		str.append("setOutputSundyOnly: "+outputSundyOnly+"\n");
         	} else {
         		str.append("ps2bot jvsglog is not running.\n");
         	}
@@ -165,6 +147,33 @@ public class Planetside2BotCommand implements MessageCreateListener {
         		String command = sc.build();
         		System.out.println(command);
         		client.sendCommand(command);
+        	}
+        }
+        
+        if (message.getContent().equalsIgnoreCase("!ps2bot heartbeat")) {
+        	message.reply("heartbeat on");
+        	client.addListener(new HeartbeatEvent() {
+				
+				public void event(String message) {
+					System.out.println("heartbeat");
+				}
+			});
+        }
+        
+        //BUG
+        if (message.getContent().equalsIgnoreCase("!ps2bot facility")) {
+        	if(running==true) {
+        		//起動済み
+        	} else {
+            	running = true;
+            	//planetside2 api スレッド開始
+            	String channel_name = message.getChannelReceiver().getName();
+            	Channel output_channel = message.getChannelReceiver();
+            	output_channel_list.add(output_channel);
+            	message.reply("拠点占拠ログ出力 #"+channel_name);
+            	OutputFacilityControlLog listener = new OutputFacilityControlLog();
+            	client.addListener(listener);
+            	client.sendCommand(listener.getCommandText());
         	}
         }
 	}

@@ -1,6 +1,5 @@
 package jp.banana.discordbot;
 import jp.banana.planetside2.command.Planetside2BotCommand;
-import jp.banana.planetside2.command.Planetside2FacilityControlCommand;
 import com.google.common.util.concurrent.FutureCallback;
 import de.btobastian.javacord.DiscordAPI;
 import de.btobastian.javacord.Javacord;
@@ -17,7 +16,6 @@ public class Planetside2Bot {
             public void onSuccess(DiscordAPI api) {
                 // register listener
             	api.registerListener(new Planetside2BotCommand());
-                api.registerListener(new Planetside2FacilityControlCommand());
 				System.out.println("ps2bot ready");
             }
 

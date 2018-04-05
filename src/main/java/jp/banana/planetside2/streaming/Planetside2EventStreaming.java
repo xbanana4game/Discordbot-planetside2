@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.websocket.ClientEndpoint;
 import javax.websocket.ContainerProvider;
 import javax.websocket.OnClose;
 import javax.websocket.OnError;
@@ -17,58 +18,25 @@ import jp.banana.planetside2.streaming.entity.FacilityControl;
 import jp.banana.planetside2.streaming.entity.VehicleDestroy;
 import jp.banana.planetside2.streaming.event.EventListener;
 import jp.banana.planetside2.streaming.event.FacilityControlEvent;
+import jp.banana.planetside2.streaming.event.HeartbeatEvent;
 import jp.banana.planetside2.streaming.event.VehicleDestroyEvent;
 
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.btobastian.javacord.entities.Channel;
-
-
-abstract public class Planetside2EventStreaming extends Thread {
-	public Channel api;
-	public String command;
+@ClientEndpoint
+public class Planetside2EventStreaming extends Thread {
 	public Session session;
 	public List<EventListener> listeners = new ArrayList<EventListener>();
-	public List<Channel> channel_list = new ArrayList<Channel>();
 	private static Logger logger = LoggerFactory.getLogger(Planetside2EventStreaming.class);
-	
-	
-	public List<Channel> getChannel_list() {
-		return channel_list;
-	}
-
-	public void setChannel_list(List<Channel> channel_list) {
-		this.channel_list = channel_list;
-	}
-
 	public final static String STREAMING_URL = "wss://push.planetside2.com/streaming?environment=ps2";
-    public Channel getApi() {
-		return api;
-	}
-    
-    abstract public String setCommand();
-
-	public void setApi(Channel api) {
-		this.api = api;
-	}
-	
-	public void setApi(List<Channel> api) {
-		this.channel_list = api;
-	}
 	
 	public void addListener(EventListener listener) {
 		synchronized (listeners) {
 			this.listeners.add(listener);
 		}
 	}
-
-	public Planetside2EventStreaming(Channel api) {
-        super();
-    	this.api = api;
-    	this.command = setCommand();
-    }
 	
 	public void sendCommand(String command) {
 		if(session.isOpen()) {
@@ -83,18 +51,34 @@ abstract public class Planetside2EventStreaming extends Thread {
 
 	@OnOpen
     public void onOpen(Session session) {
-		logger.debug("[セッション確立]");
+		logger.debug("[Connected]");
     }
     
     @OnMessage
     public void onMessage(String message) {
 //        System.err.println("[Receive]:" + message);
         logger.debug("[Receive]:" + message);
-        String msg = getOutputMsg(message);
         
 		JSONObject json = new JSONObject(message);
-		String event_name = json.getJSONObject("payload").getString("event_name");
+		
+		String event_name = "";
+		if(json.has("payload")) {
+			event_name = json.getJSONObject("payload").getString("event_name");
+		}
 		logger.debug("event_name: "+event_name);
+		
+		String eventNames = "";
+		if(json.has("subscription")) {
+			eventNames = json.getJSONObject("subscription").getJSONArray("eventNames").get(0).toString();
+		}
+		logger.debug("eventNames: "+eventNames);
+		
+		String type = "";
+		if(json.has("type")){
+			type = json.getString("type");
+		}
+		logger.debug("type: "+type);
+		
 		synchronized (listeners) {
 			if(event_name.equals("VehicleDestroy")) {
 				for(EventListener l:listeners) {
@@ -103,26 +87,23 @@ abstract public class Planetside2EventStreaming extends Thread {
 						((VehicleDestroyEvent) l).event(vd);
 					}
 				}
-			} else if(event_name.equals("FacilityControl")) {
+			} else if(eventNames.equals("FacilityControl")) {
 				for(EventListener l:listeners) {
 					if(l instanceof FacilityControlEvent) {
 						FacilityControl fc = parseFacilityControl(message);
 						((FacilityControlEvent) l).event(fc);
 					}
 				}
+			} else if(type.equals("heartbeat")){
+				for(EventListener l:listeners) {
+					if(l instanceof HeartbeatEvent) {
+						((HeartbeatEvent) l).event(message);
+					}
+				}
 			} else {
 				
 			}
 		}
-        
-        if(msg!=null && api!=null) {
-        	 api.sendMessage(msg);
-        }
-        if(msg!=null && channel_list!=null) {
-        	for(Channel c:channel_list) {
-        		c.sendMessage(msg);
-        	}
-        }
     }
     
 	public void run() {
@@ -131,7 +112,6 @@ abstract public class Planetside2EventStreaming extends Thread {
 			String serviceID = BotConfig.getSingleton().getServiceID();
 			URI uri = URI.create(STREAMING_URL+"&service-id=s:"+serviceID);
 			session = container.connectToServer(this,uri);
-			session.getBasicRemote().sendText(command);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -195,13 +175,6 @@ abstract public class Planetside2EventStreaming extends Thread {
 
 		return fc;
 	}
-	
-    /**
-     * メッセージ作成
-     * @param facility_control
-     * @return
-     */
-	abstract public String getOutputMsg(String message);
 
 	@OnError
     public void onError(Throwable th) {   
