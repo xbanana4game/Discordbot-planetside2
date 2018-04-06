@@ -1,7 +1,5 @@
 package jp.banana.planetside2.streaming.entity;
 
-import org.json.JSONObject;
-
 
 public class VehicleDestroy {
 /*

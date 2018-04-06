@@ -3,20 +3,19 @@ package jp.banana.discordbot;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.websocket.ClientEndpoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.btobastian.javacord.entities.Channel;
 import jp.banana.planetside2.api.Planetside2API;
 import jp.banana.planetside2.entity.Faction;
-import jp.banana.planetside2.streaming.Planetside2EventStreaming;
 import jp.banana.planetside2.streaming.StreamingCommandBuilder;
 import jp.banana.planetside2.streaming.StreamingCommandBuilder.EVENTNAME;
 import jp.banana.planetside2.streaming.entity.FacilityControl;
-import jp.banana.planetside2.streaming.entity.VehicleDestroy;
 import jp.banana.planetside2.streaming.event.FacilityControlEvent;
-import jp.banana.planetside2.streaming.event.VehicleDestroyEvent;
 
 public class OutputFacilityControlLog implements FacilityControlEvent {
+	private static Logger log = LoggerFactory.getLogger(OutputFacilityControlLog.class);
 	private boolean outputCaptue;
 	private boolean outputVsOnly;
 	public List<Channel> channel_list = new ArrayList<Channel>();
@@ -111,6 +110,7 @@ public class OutputFacilityControlLog implements FacilityControlEvent {
 		//メッセージ出力
         if(is_output) {
         	String msg = getOutputMsg(fc);
+        	log.info(msg);
         	for(Channel c:channel_list) {
         		c.sendMessage(msg);
         	}
@@ -118,6 +118,10 @@ public class OutputFacilityControlLog implements FacilityControlEvent {
         } else {
         	return;
         }
+	}
+	
+	public void setChannel_list(List<Channel> channel_list) {
+		this.channel_list = channel_list;
 	}
 
 }

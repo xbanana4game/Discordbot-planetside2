@@ -18,28 +18,33 @@ import jp.banana.discordbot.BotConfig;
 import jp.banana.planetside2.command.ApiCommandBuilder;
 import jp.banana.planetside2.command.ApiCommandBuilder.NAMESPACE;
 import jp.banana.planetside2.entity.CharacterInfo;
+import jp.banana.planetside2.entity.Datatype;
 import jp.banana.planetside2.entity.Facility;
 import jp.banana.planetside2.entity.Outfit;
 import jp.banana.planetside2.entity.Vehicle;
 import jp.banana.planetside2.entity.Weapon;
-import jp.banana.planetside2.streaming.entity.FacilityControl;
+
 
 public class Planetside2API {
+	private static Logger log = LoggerFactory.getLogger(Planetside2API.class);
 	private static Planetside2API singleton = new Planetside2API();
 	public Outfit outfit = new Outfit();
 	public List<Vehicle> vehicle;
 	public List<Facility> facility;
-	private static Logger log;
 	
 	private Planetside2API() {
 		super();
-		log = LoggerFactory.getLogger(Planetside2API.class);
+		init();
+	}
+	
+	public void init() {
 		log.debug("Planetside2API INIT");
 		getVehicleInfo();
-		getJVSGMember();
+		getOutfitMember();
 		getWeaponInfo();
 		getFacilityData();
 	}
+	
 	public static Planetside2API getSingleton() {
 		return singleton;
 	}
@@ -57,8 +62,8 @@ public class Planetside2API {
 			
 			if ((line = in.readLine()) == null) {
 				return null;
-//				System.out.println(line);
 			}
+			log.debug("getAPIString() data:"+line);
 		} catch (MalformedURLException e1) {
 			e1.printStackTrace();
 		} catch (IOException e) {
@@ -74,27 +79,17 @@ public class Planetside2API {
 	 * @throws Exception
 	 */
 	public static String getFacilityName(String id) throws Exception {
-		Facility fc = new Facility();
 		
 		if(id.equals("")||id==null){
 			return "NULL";
 		}
 		
-		ApiCommandBuilder command = new ApiCommandBuilder(ApiCommandBuilder.NAMESPACE.PS2V2, "map_region", "facility_id="+id);
-		URL url = new URL(command.build());
-		URLConnection conn = url.openConnection();
-		
-		BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-		String line;
-		while ((line = in.readLine()) != null) {
-//			System.out.println(line);
-			fc = parseFacility(line);
-			if(fc==null) {
-				return "";
-			}
-//			System.out.println(fc);
+		String command = new ApiCommandBuilder(ApiCommandBuilder.NAMESPACE.PS2V2, "map_region", "facility_id="+id).build();
+		String data = getAPIString(command);
+		Facility fc = parseFacility(data);
+		if(fc==null) {
+			return "";
 		}
-		
 		if(fc.facility_type.contains("Outpost")) {
 			return fc.facility_name;
 		}
@@ -103,41 +98,10 @@ public class Planetside2API {
 	
 	public void getFacilityData() {
 		facility = new ArrayList<Facility>();
-		
-		ApiCommandBuilder command = new ApiCommandBuilder(ApiCommandBuilder.NAMESPACE.PS2V2, "map_region").setLimit(5000);
-		URL url = null;
-		try {
-			url = new URL(command.build());
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
-		
-		URLConnection conn = null;
-		try {
-			conn = url.openConnection();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		BufferedReader in = null;
-		try {
-			in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-		String line;
-		try {
-			while ((line = in.readLine()) != null) {
-//				System.out.println(line);
-				facility = parseFacilityList(line);
-//				System.out.println(facility.size());
-//				for(Facility fc : facility) {
-//					System.out.println(fc);
-//				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		String command = new ApiCommandBuilder(ApiCommandBuilder.NAMESPACE.PS2V2, "map_region").setLimit(5000).build();
+		log.info("getFacilityData: "+command);
+		String data = getAPIString(command);
+		facility = parseFacilityList(data);
 	}
 	
 	public void outputCsvFacility() {
@@ -159,7 +123,7 @@ public class Planetside2API {
 			}
 			fw.close();
 		} catch (IOException ex) {
-			log.debug(ex.getMessage());
+			log.error(ex.getMessage());
 //			ex.printStackTrace();
 		}
 	}
@@ -186,6 +150,7 @@ public class Planetside2API {
 		List<Facility> fc = new ArrayList<Facility>();
 		JSONObject json = new JSONObject(data);
 		int returned = json.getInt("returned");
+		log.info("parseFacilityList returned:"+returned);
 		if(returned==0) {
 			return null;
 		}
@@ -203,8 +168,8 @@ public class Planetside2API {
 				facility.zone_id = json.getJSONArray("map_region_list").getJSONObject(i).getInt("zone_id");
 				fc.add(facility);
 			} catch (Exception e) {
-				log.info(e.getMessage());
-				log.info(json.getJSONArray("map_region_list").getJSONObject(i).toString());
+				log.debug(e.getMessage());
+				log.debug(json.getJSONArray("map_region_list").getJSONObject(i).toString());
 //				System.err.println(e);
 			}
 		}
@@ -218,19 +183,11 @@ public class Planetside2API {
 		if(id.equals("")||id==null){
 			return "NULL";
 		}
-		ApiCommandBuilder command = new ApiCommandBuilder(ApiCommandBuilder.NAMESPACE.PS2V2, "character", "character_id="+id);
-		URL url = new URL(command.build());
-		URLConnection conn = url.openConnection();
-		
-		BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-		String line;
-		while ((line = in.readLine()) != null) {
-//			System.out.println(line);
-			chara = parseCharacter(line);
-			if(chara==null) {
-				return "";
-			}
-//			System.out.println(chara);
+		String command = new ApiCommandBuilder(ApiCommandBuilder.NAMESPACE.PS2V2, "character", "character_id="+id).build();
+		String data = getAPIString(command);
+		chara = parseCharacter(data);
+		if(chara==null) {
+			return "";
 		}
 		return chara.name_first;
 	}
@@ -242,7 +199,8 @@ public class Planetside2API {
 			return chara;
 		}
 		
-		String data = getAPIString("http://census.daybreakgames.com/get/ps2:v2/vehicle?c:limit=1000");
+		String command = new ApiCommandBuilder(ApiCommandBuilder.NAMESPACE.PS2V2, "vehicle").setLimit(5000).build();
+		String data = getAPIString(command);
 		if(data==null) {
 			return null;
 		}
@@ -256,6 +214,7 @@ public class Planetside2API {
 		JSONObject json = new JSONObject(data);
 		chara.name_first = json.getJSONArray("character_list").getJSONObject(0).getJSONObject("name").getString("first");
 		int returned = json.getInt("returned");
+		log.info("parseCharacter returned:"+returned);
 		if(returned==0) {
 			System.out.println("Character Not found. returned=0");
 			chara = null;
@@ -276,9 +235,9 @@ public class Planetside2API {
 	}
 	
 	public void getVehicleInfo() {
-		log.debug("getVehicleInfo");
-		//http://census.daybreakgames.com/get/ps2:v2/vehicle?c:limit=1000
-		String data = getAPIString("http://census.daybreakgames.com/get/ps2:v2/vehicle?c:limit=1000&c:lang=en");
+		String command = new ApiCommandBuilder(ApiCommandBuilder.NAMESPACE.PS2V2, "vehicle").setLimit(5000).setLang("en").build();
+		log.info("getVehicleInfo: "+command);
+		String data = getAPIString(command);
 		if(data==null) {
 			return;
 		}
@@ -309,8 +268,8 @@ public class Planetside2API {
 				//System.out.println(v);
 			} catch (Exception e) {
 //				e.printStackTrace();
-				log.info(e.getMessage());
-				log.info(json.getJSONArray("vehicle_list").getJSONObject(i).toString());
+				log.debug(e.getMessage());
+				log.debug(json.getJSONArray("vehicle_list").getJSONObject(i).toString());
 //				System.err.println(e.getMessage());
 //				System.err.println(json.getJSONArray("vehicle_list").getJSONObject(i).toString());
 //				System.err.println(v);
@@ -320,11 +279,11 @@ public class Planetside2API {
 		return vehicle;
 	}
 	
-	public void getJVSGMember() {
+	public void getOutfitMember() {
 		String outfitID = BotConfig.getSingleton().getOutfitID();
-		//JVSG
-		ApiCommandBuilder command = new ApiCommandBuilder(NAMESPACE.PS2V2, "outfit", "outfit_id="+outfitID+"&c:resolve=member");
-		String data = getAPIString(command.build());
+		String command = new ApiCommandBuilder(NAMESPACE.PS2V2, "outfit", "outfit_id="+outfitID+"&c:resolve=member").build();
+		log.info("getOutfitMember: "+command);
+		String data = getAPIString(command);
 		if(data==null) {
 			return;
 		}
@@ -332,7 +291,7 @@ public class Planetside2API {
 	}
 	
 
-	public boolean isJVSGMember(String character_id) {
+	public boolean isOutfitMember(String character_id) {
 		for(CharacterInfo c:outfit.member_list) {
 			if(c.character_id.equals(character_id)) {
 				return true;
@@ -353,16 +312,9 @@ public class Planetside2API {
 		}
 		
 		Outfit outfit = new Outfit();
-		URL url = new URL("http://census.daybreakgames.com/get/ps2/outfit?outfit_id="+id);
-		URLConnection conn = url.openConnection();
-		
-		BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-		String line;
-		while ((line = in.readLine()) != null) {
-//			System.out.println(line);
-			outfit = parseOutfit(line);
-//			System.out.println(outfit);
-		}
+		String command = new ApiCommandBuilder(ApiCommandBuilder.NAMESPACE.PS2V2, "outfit", "outfit_id="+id).build();
+		String data = getAPIString(command);
+		outfit = parseOutfit(data);
 		return outfit.name;
 	}
 	public static Outfit parseOutfit(String data) {
@@ -370,6 +322,7 @@ public class Planetside2API {
 		
 		JSONObject json = new JSONObject(data);
 		int returned = json.getInt("returned");
+		log.info("parseOutfit returned:"+returned);
 		if(returned==0){
 			return null;
 		}
@@ -409,11 +362,19 @@ public class Planetside2API {
 	}
 	
 	public void getWeaponInfo() {
-		String data = getAPIString("http://census.daybreakgames.com/get/ps2:v2/item?c:limit=5000&c:lang=en&c:start=0");
+		String command = new ApiCommandBuilder(ApiCommandBuilder.NAMESPACE.PS2V2, "item").setLang("en").setLimit(5000).setStart("0").build();
+		log.info("getWeaponInfo: "+command);
+		String data = getAPIString(command);
 		parseWeapon(data);
-		data = getAPIString("http://census.daybreakgames.com/get/ps2:v2/item?c:limit=5000&c:lang=en&c:start=5000");
+		
+		command = new ApiCommandBuilder(ApiCommandBuilder.NAMESPACE.PS2V2, "item").setLang("en").setLimit(5000).setStart("5000").build();
+		log.info("getWeaponInfo: "+command);
+		data = getAPIString(command);
 		parseWeapon(data);
-		data = getAPIString("http://census.daybreakgames.com/get/ps2:v2/item?c:limit=5000&c:lang=en&c:start=10000");
+		
+		command = new ApiCommandBuilder(ApiCommandBuilder.NAMESPACE.PS2V2, "item").setLang("en").setLimit(5000).setStart("10000").build();
+		log.info("getWeaponInfo: "+command);
+		data = getAPIString(command);
 		parseWeapon(data);
 	}
 	
@@ -425,24 +386,23 @@ public class Planetside2API {
 			try {
 				wp.item_id = json.getJSONArray("item_list").getJSONObject(i).getInt("item_id");
 				wp.item_type_id = json.getJSONArray("item_list").getJSONObject(i).getInt("item_type_id");
-				wp.item_category_id = json.getJSONArray("item_list").getJSONObject(i).getInt("item_category_id");
 				wp.is_vehicle_weapon = json.getJSONArray("item_list").getJSONObject(i).getInt("is_vehicle_weapon");
-				wp.name_en = json.getJSONArray("item_list").getJSONObject(i).getJSONObject("name").getString("en");
-				wp.description_en = json.getJSONArray("item_list").getJSONObject(i).getJSONObject("description").getString("en");
-				wp.image_set_id = json.getJSONArray("item_list").getJSONObject(i).getInt("image_set_id");
-				wp.image_id = json.getJSONArray("item_list").getJSONObject(i).getInt("image_id");
-				wp.image_path = json.getJSONArray("item_list").getJSONObject(i).getString("image_path");
-				wp.is_default_attachment = json.getJSONArray("item_list").getJSONObject(i).getInt("is_default_attachment");
 				if(wp.item_type_id==26||wp.is_vehicle_weapon==1) {
+					wp.item_category_id = json.getJSONArray("item_list").getJSONObject(i).getInt("item_category_id");
+					wp.name_en = json.getJSONArray("item_list").getJSONObject(i).getJSONObject("name").getString("en");
+					wp.description_en = json.getJSONArray("item_list").getJSONObject(i).getJSONObject("description").getString("en");
+					wp.image_set_id = json.getJSONArray("item_list").getJSONObject(i).getInt("image_set_id");
+					wp.image_id = json.getJSONArray("item_list").getJSONObject(i).getInt("image_id");
+					wp.image_path = json.getJSONArray("item_list").getJSONObject(i).getString("image_path");
+					wp.is_default_attachment = json.getJSONArray("item_list").getJSONObject(i).getInt("is_default_attachment");
+				
 					weapon_list.add(wp);
 				}
-//				System.out.println(wp);
+				log.debug(wp.toString());
 			} catch(Exception e) {
-				log.info(e.getMessage());
-				log.info(json.getJSONArray("item_list").getJSONObject(i).toString());
-//				System.err.println(e.getMessage());
+				log.debug(e.getMessage());
+				log.debug(json.getJSONArray("item_list").getJSONObject(i).toString());
 //				weapon_list.add(wp);
-//				System.err.println(json.getJSONArray("item_list").getJSONObject(i).toString());
 			}
 		}
 		
@@ -482,4 +442,66 @@ public class Planetside2API {
 		}
 	}
 	
+	public List<Datatype> getDatatype() {
+		String url = new ApiCommandBuilder(NAMESPACE.PS2).build();
+		String data = getAPIString(url);
+		List<Datatype> dt = parseDatatype(data);
+		return dt;
+	}
+	
+	public void outputCsvDatatype(List<Datatype> datatype_list) {
+		// ファイル出力
+		try {
+			FileWriter fw = new FileWriter("datatype.csv.txt");
+			fw.write(Datatype.csvHead()+"\n");
+			for (Datatype d : datatype_list) {
+				String l = Datatype.csvBody(d);
+				fw.write(l+"\n");
+			}
+			fw.close();
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		}
+	}
+	
+	public List<Datatype> parseDatatype(String data) {
+		List<Datatype> datatype_list = new ArrayList<Datatype>();
+		JSONObject json = new JSONObject(data);
+		int returned = json.getInt("returned");
+		log.info("parseDatatype returned:"+returned);
+		if(returned==0) {
+			return null;
+		}
+		for(int i=0;i<json.getJSONArray("datatype_list").length();i++) {
+			try{
+				String name = json.getJSONArray("datatype_list").getJSONObject(i).getString("name");
+				boolean hidden = json.getJSONArray("datatype_list").getJSONObject(i).getBoolean("hidden");
+				Object count_ = json.getJSONArray("datatype_list").getJSONObject(i).get("count");
+
+				String count = null;
+				if(count_ instanceof String) {
+					count = json.getJSONArray("datatype_list").getJSONObject(i).getString("count");
+				} else if(count_ instanceof Integer){
+					count = String.valueOf(json.getJSONArray("datatype_list").getJSONObject(i).getInt("count"));
+				}
+				
+				List<String> resolve_list = new ArrayList<String>();
+				int resolve_list_len = json.getJSONArray("datatype_list").getJSONObject(i).getJSONArray("resolve_list").length();
+				for(int j=0;j<resolve_list_len;j++) {
+					resolve_list.add(json.getJSONArray("datatype_list").getJSONObject(i).getJSONArray("resolve_list").getString(j));
+				}
+				
+				Datatype dt = new Datatype(name, hidden, count, resolve_list );
+				datatype_list.add(dt);
+				log.debug(i+":"+json.getJSONArray("datatype_list").getJSONObject(i).toString());
+				log.debug(dt.toString());
+			}
+			catch(Exception e) {
+				log.debug(i+":"+json.getJSONArray("datatype_list").getJSONObject(i).toString());
+				log.debug(e.getMessage());
+			}
+
+		}
+		return datatype_list;
+	}
 }

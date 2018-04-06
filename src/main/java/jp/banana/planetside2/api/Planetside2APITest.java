@@ -7,7 +7,7 @@ import org.junit.Test;
 public class Planetside2APITest {
 
 	@Test
-	public void test() {
+	public void getOutfitName() {
 		try {
 			String name = Planetside2API.getOutfitName("37512998641471064");
 			assertEquals(name, "Japan VS Guardians");
@@ -17,17 +17,14 @@ public class Planetside2APITest {
 	}
 	
 	@Test
-	public void test2() {
+	public void getFacilityName() {
 		try {
 			String name = Planetside2API.getFacilityName("5100");
 			assertEquals(name, "Indar Excavation Site");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-	
-	@Test
-	public void test_getFacilityName() {
+		
 		try {
 			String name = Planetside2API.getFacilityName("7000");
 			assertEquals(name, "Tawrich Tech Plant");
@@ -37,7 +34,7 @@ public class Planetside2APITest {
 	}
 	
 	@Test
-	public void test3() {
+	public void getCharacterName() {
 		try {
 			String name = Planetside2API.getCharacterName("5428366106639191985");
 			assertEquals(name, "hhuftyfyt");
@@ -45,26 +42,22 @@ public class Planetside2APITest {
 			e.printStackTrace();
 		}
 	}
-	@Test
-	public void test4() {
-		Planetside2API.getSingleton().getFacilityData();
-	}
 	
 	@Test
-	public void test5() {
+	public void getVehicleName() {
 		String name = Planetside2API.getSingleton().getVehicleName(1);
 		assertEquals(name, "Flash");
 	}
 	
 	@Test
-	public void test6() {
-		Planetside2API.getSingleton().getJVSGMember();
-		boolean jvsg = Planetside2API.getSingleton().isJVSGMember("5428366106639191985");
-		assertEquals(jvsg, true);
+	public void isOutfitMember() {
+		Planetside2API.getSingleton().getOutfitMember();
+		boolean outfit = Planetside2API.getSingleton().isOutfitMember("5428366106639191985");
+		assertEquals(outfit, true);
 	}
 	
 	@Test
-	public void test7() {
+	public void getWeaponName() {
 //		Planetside2API.getSingleton().getWeaponInfo();
 		Planetside2API.getSingleton().outputCsvWeaponInfo();
 		String name = Planetside2API.getSingleton().getWeaponName(705);

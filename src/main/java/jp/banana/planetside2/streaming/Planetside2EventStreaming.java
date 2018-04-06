@@ -64,44 +64,48 @@ public class Planetside2EventStreaming extends Thread {
 		String event_name = "";
 		if(json.has("payload")) {
 			event_name = json.getJSONObject("payload").getString("event_name");
+			logger.debug("event_name: "+event_name);
 		}
-		logger.debug("event_name: "+event_name);
 		
-		String eventNames = "";
-		if(json.has("subscription")) {
-			eventNames = json.getJSONObject("subscription").getJSONArray("eventNames").get(0).toString();
-		}
-		logger.debug("eventNames: "+eventNames);
+//		String eventNames = "";
+//		if(json.has("subscription")) {
+//			eventNames = json.getJSONObject("subscription").getJSONArray("eventNames").get(0).toString();
+//		}
+//		logger.debug("eventNames: "+eventNames);
 		
 		String type = "";
 		if(json.has("type")){
 			type = json.getString("type");
+			logger.debug("type: "+type);
 		}
-		logger.debug("type: "+type);
 		
 		synchronized (listeners) {
 			if(event_name.equals("VehicleDestroy")) {
+				logger.info("[Receive]:VehicleDestroy");
+				VehicleDestroy vd = parseVehicleDestroy(message);
 				for(EventListener l:listeners) {
 					if(l instanceof VehicleDestroyEvent) {
-						VehicleDestroy vd = parseVehicleDestroy(message);
 						((VehicleDestroyEvent) l).event(vd);
 					}
 				}
-			} else if(eventNames.equals("FacilityControl")) {
+			} else if(event_name.equals("FacilityControl")) {
+				logger.info("[Receive]:FacilityControl");
+				FacilityControl fc = parseFacilityControl(message);
 				for(EventListener l:listeners) {
 					if(l instanceof FacilityControlEvent) {
-						FacilityControl fc = parseFacilityControl(message);
 						((FacilityControlEvent) l).event(fc);
 					}
 				}
 			} else if(type.equals("heartbeat")){
+				boolean online = parseHeartBeat("EventServerEndpoint_Connery_1", message);
+				logger.info("[Receive]:heartbeat EventServerEndpoint_Connery_1:"+online);
 				for(EventListener l:listeners) {
 					if(l instanceof HeartbeatEvent) {
-						((HeartbeatEvent) l).event(message);
+						((HeartbeatEvent) l).event(online);
 					}
 				}
 			} else {
-				
+				logger.info("[Receive]:" + message);
 			}
 		}
     }
@@ -175,6 +179,12 @@ public class Planetside2EventStreaming extends Thread {
 
 		return fc;
 	}
+    
+    public boolean parseHeartBeat(String endpoint, String data) {
+    	JSONObject json = new JSONObject(data);
+    	boolean online = Boolean.valueOf(json.getJSONObject("online").getString(endpoint));
+    	return online;
+    }
 
 	@OnError
     public void onError(Throwable th) {   

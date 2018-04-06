@@ -20,19 +20,18 @@
 	</appender>
 
      <logger name="jp.banana.planetside2.api" level="INFO" additivity="false">
+     	 <appender-ref ref="STDOUT" />
 	     <appender-ref ref="FILE" />
      </logger>
-     <logger name="jp.banana.planetside2.command" level="ERROR" additivity="false">
+     <logger name="jp.banana.planetside2.command" level="INFO" additivity="false">
      	<appender-ref ref="STDOUT" />
 	    <appender-ref ref="FILE" />
      </logger>
-     <logger name="jp.banana.planetside2.streaming" level="DEBUG" additivity="false">
+     <logger name="jp.banana.planetside2.streaming" level="INFO" additivity="false">
     	<appender-ref ref="STDOUT" />
      	<appender-ref ref="FILE" />
      </logger>
      
-     <logger name="de.btobastian" level="ERROR"/>
-
      <root level="ERROR">
          <appender-ref ref="STDOUT" />
      </root>

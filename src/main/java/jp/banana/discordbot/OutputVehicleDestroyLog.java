@@ -2,14 +2,11 @@ package jp.banana.discordbot;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.websocket.ClientEndpoint;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jp.banana.planetside2.api.Planetside2API;
-import jp.banana.planetside2.command.Planetside2BotCommand;
-import jp.banana.planetside2.streaming.Planetside2EventStreaming;
 import jp.banana.planetside2.streaming.StreamingCommandBuilder;
 import jp.banana.planetside2.streaming.StreamingCommandBuilder.EVENTNAME;
 import jp.banana.planetside2.streaming.entity.VehicleDestroy;
@@ -49,17 +46,17 @@ public class OutputVehicleDestroyLog implements VehicleDestroyEvent {
         	return false;
         }
         
-        //JVSG MEMBERÇÃÇ›èoóÕ
-        boolean jvsg = Planetside2API.getSingleton().isJVSGMember(vd.attacker_character_id);
-        boolean jvsg2 = Planetside2API.getSingleton().isJVSGMember(vd.character_id);
-        log.debug("jvsg: "+jvsg);
-        if(jvsg==false&&jvsg2==false) {
-        	log.debug("Attacker is not JVSG");
+        //OUTFIT MEMBERÇÃÇ›èoóÕ
+        boolean outfit = Planetside2API.getSingleton().isOutfitMember(vd.attacker_character_id);
+        boolean outfit2 = Planetside2API.getSingleton().isOutfitMember(vd.character_id);
+        log.debug("outfit: "+outfit);
+        if(outfit==false&&outfit2==false) {
+        	log.debug("Attacker is not Outfit");
 			return false;
 		}
 		// TKÇÕèoóÕÇµÇ»Ç¢
-		if (jvsg == true && jvsg2 == true) {
-			log.debug("Attacked is JVSG");
+		if (outfit == true && outfit2 == true) {
+			log.debug("Attacked is Outfit");
 			return false;
 		}
 
@@ -114,14 +111,15 @@ public class OutputVehicleDestroyLog implements VehicleDestroyEvent {
         	return;
         }
         
-        boolean jvsg2 = Planetside2API.getSingleton().isJVSGMember(vd.character_id);
+        boolean outfit2 = Planetside2API.getSingleton().isOutfitMember(vd.character_id);
         String outputMSG = "";
-        if(jvsg2==false) {
+        if(outfit2==false) {
         	outputMSG = getOutputMsg(vd);
         } else {
         	outputMSG = getOutputMsgDestroyed(vd);
         }
         
+        log.info(outputMSG);
     	for(Channel c:channel_list) {
     		c.sendMessage(outputMSG);
     	}

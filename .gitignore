@@ -8,3 +8,4 @@ target/maven-archiver/pom.properties
 /.classpath
 /.project
 /datatype.csv.txt
+/weapon.csv.txt
