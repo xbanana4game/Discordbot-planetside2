@@ -24,6 +24,10 @@ public class OutputFacilityControlLog implements FacilityControlEvent {
 		outputVsOnly = true;
 		outputCaptue = true;
 	}
+	public OutputFacilityControlLog(boolean VsOnly, boolean DefendOnly) {
+		outputVsOnly = VsOnly;
+		outputCaptue = DefendOnly;
+	}
 	public String getCommandText() {
 		StreamingCommandBuilder sc = new StreamingCommandBuilder().addEventNames(EVENTNAME.FacilityControl);
 		sc = sc.addWorlds(1);
@@ -44,32 +48,34 @@ public class OutputFacilityControlLog implements FacilityControlEvent {
         try {
         	outfit_name = Planetside2API.getOutfitName(facility_control.outfit_id);
 	        if(outfit_name==null || outfit_name.equals("")) {
+	        	log.info("OutfitName not Found.");
 	        	return "";
 	        }
         	
         	facility_name = Planetside2API.getFacilityName(String.valueOf(facility_control.facility_id));
 	        if(facility_name==null || facility_name.equals("")) {
+	        	log.info("FacilityName not Found.");
 	        	return "";
 	        }
 		} catch (Exception e1) {
 			e1.printStackTrace();
 			return "";
 		}
-        System.out.println("outfit_name: "+outfit_name+", "+"facility_name: "+facility_name);
+        log.debug("outfit_name: "+outfit_name+", "+"facility_name: "+facility_name);
         String new_faction = Faction.getFactionName(facility_control.new_faction_id);
 
         if(facility_control.old_faction_id==facility_control.new_faction_id) {
         	if(outfit_name.equals("UNKNOW")) {
-        		outputMSG = String.format("%s‚ª%s‚ğ–h‰q\n", new_faction, facility_name);
+        		outputMSG = String.format("%s‚ª%s‚ğ–h‰q", new_faction, facility_name);
         	} else {
-        		outputMSG = String.format("%s‚Ì%s‚ª%s‚ğ–h‰q\n", new_faction, outfit_name, facility_name);
+        		outputMSG = String.format("%s‚Ì%s‚ª%s‚ğ–h‰q", new_faction, outfit_name, facility_name);
         	}
         	
         } else {
         	if(outfit_name.equals("UNKNOW")) {
-        		outputMSG = String.format("%s‚ª%s‚ğè—Ì\n", new_faction, facility_name);
+        		outputMSG = String.format("%s‚ª%s‚ğè—Ì", new_faction, facility_name);
         	} else {
-                outputMSG = String.format("%s‚Ì%s‚ª%s‚ğè—Ì\n", new_faction, outfit_name, facility_name);
+                outputMSG = String.format("%s‚Ì%s‚ª%s‚ğè—Ì", new_faction, outfit_name, facility_name);
         	}
         }
         
@@ -79,18 +85,34 @@ public class OutputFacilityControlLog implements FacilityControlEvent {
 	public void event(FacilityControl fc) {
     	boolean isDefend = false;
     	boolean isVS = false;
+    	boolean isZone = false;
         
+    	//‘å—¤
+    	if(fc.zone_id<10) {
+    		//2:Indar 4:Hossin 6:Amerish 8:Esamir
+    		log.debug(Planetside2API.getZoneName(fc.zone_id));
+    		isZone = true;
+    	} else {
+    		log.debug("Unknown Zone");
+    		isZone = false;
+    		return;
+    	}
+    	
         //VSŠÖ˜A
         if((fc.old_faction_id==1) || (fc.new_faction_id==1)){
+        	log.debug("Faction VS");
         	isVS = true;
         } else {
+        	log.debug("Faction Not VS");
         	isVS = false;
         }
 		
 		//–h‰q
 		if(fc.old_faction_id==fc.new_faction_id) {
+			log.debug("Defend");
 			isDefend = true;
 		} else {
+			log.debug("Capture");
 			isDefend = false;
 		}
 		
@@ -105,6 +127,9 @@ public class OutputFacilityControlLog implements FacilityControlEvent {
 			if(isVS==false) {
 				is_output = false;
 			}
+		}
+		if(!isZone) {
+			is_output = false;
 		}
 
 		//ƒƒbƒZ[ƒWo—Í

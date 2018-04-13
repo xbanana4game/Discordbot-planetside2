@@ -52,6 +52,7 @@ public class Planetside2API {
 	public static String getAPIString(String page_url) {
 		URL url = null;
 		String line = null;
+		log.debug("getAPIString() GET: "+page_url);
 		try {
 			url = new URL(page_url);
 			URLConnection conn;
@@ -65,8 +66,10 @@ public class Planetside2API {
 			}
 			log.debug("getAPIString() data:"+line);
 		} catch (MalformedURLException e1) {
-			e1.printStackTrace();
+			log.error(e1.getMessage());
+//			e1.printStackTrace();
 		} catch (IOException e) {
+			log.error(e.getMessage());
 			e.printStackTrace();
 		}
 		return line;
@@ -86,6 +89,9 @@ public class Planetside2API {
 		
 		String command = new ApiCommandBuilder(ApiCommandBuilder.NAMESPACE.PS2V2, "map_region", "facility_id="+id).build();
 		String data = getAPIString(command);
+		if(data==null) {
+			return "";
+		}
 		Facility fc = parseFacility(data);
 		if(fc==null) {
 			return "";
@@ -131,29 +137,47 @@ public class Planetside2API {
 	public static Facility parseFacility(String data) {
 		Facility facility = new Facility();
 		JSONObject json = new JSONObject(data);
-		int returned = json.getInt("returned");
-		if(returned==0) {
+		try {
+			int returned = json.getInt("returned");
+			if(returned==0) {
+				log.error("Facility not Found."+data);
+				return null;
+			}
+		} catch(Exception e) {
+			log.debug(e.getMessage()+data);
 			return null;
 		}
-		facility.facility_id = json.getJSONArray("map_region_list").getJSONObject(0).getInt("facility_id");
-		facility.facility_name = json.getJSONArray("map_region_list").getJSONObject(0).getString("facility_name");
-		facility.facility_type = json.getJSONArray("map_region_list").getJSONObject(0).getString("facility_type");
-		facility.facility_type_id = json.getJSONArray("map_region_list").getJSONObject(0).getInt("facility_type_id");
-		facility.location_x = json.getJSONArray("map_region_list").getJSONObject(0).getDouble("location_x");
-		facility.location_y = json.getJSONArray("map_region_list").getJSONObject(0).getDouble("location_y");
-		facility.location_z = json.getJSONArray("map_region_list").getJSONObject(0).getDouble("location_z");
-		facility.map_region_id = json.getJSONArray("map_region_list").getJSONObject(0).getInt("map_region_id");
-		facility.zone_id = json.getJSONArray("map_region_list").getJSONObject(0).getInt("zone_id");
+		
+		try {
+			facility.facility_id = json.getJSONArray("map_region_list").getJSONObject(0).getInt("facility_id");
+			facility.facility_name = json.getJSONArray("map_region_list").getJSONObject(0).getString("facility_name");
+			facility.facility_type = json.getJSONArray("map_region_list").getJSONObject(0).getString("facility_type");
+			facility.facility_type_id = json.getJSONArray("map_region_list").getJSONObject(0).getInt("facility_type_id");
+			facility.location_x = json.getJSONArray("map_region_list").getJSONObject(0).getDouble("location_x");
+			facility.location_y = json.getJSONArray("map_region_list").getJSONObject(0).getDouble("location_y");
+			facility.location_z = json.getJSONArray("map_region_list").getJSONObject(0).getDouble("location_z");
+			facility.map_region_id = json.getJSONArray("map_region_list").getJSONObject(0).getInt("map_region_id");
+			facility.zone_id = json.getJSONArray("map_region_list").getJSONObject(0).getInt("zone_id");
+		} catch(Exception e) {
+			log.error(e.getMessage());
+			log.info(data);
+		}
 		return facility;
 	}
 	public static List<Facility> parseFacilityList(String data) {
 		List<Facility> fc = new ArrayList<Facility>();
 		JSONObject json = new JSONObject(data);
-		int returned = json.getInt("returned");
-		log.info("parseFacilityList returned:"+returned);
-		if(returned==0) {
+		try {
+			int returned = json.getInt("returned");
+			log.debug("parseFacilityList returned:"+returned);
+			if(returned==0) {
+				return null;
+			}
+		} catch (Exception e) {
+			log.error(e.getMessage());
 			return null;
 		}
+
 		for(int i=0;i<json.getJSONArray("map_region_list").length();i++) {			
 			try {
 				Facility facility = new Facility();
@@ -167,9 +191,10 @@ public class Planetside2API {
 				facility.map_region_id = json.getJSONArray("map_region_list").getJSONObject(i).getInt("map_region_id");
 				facility.zone_id = json.getJSONArray("map_region_list").getJSONObject(i).getInt("zone_id");
 				fc.add(facility);
+				log.trace(fc.toString());
 			} catch (Exception e) {
-				log.debug(e.getMessage());
-				log.debug(json.getJSONArray("map_region_list").getJSONObject(i).toString());
+				log.error(e.getMessage());
+				log.info(json.getJSONArray("map_region_list").getJSONObject(i).toString());
 //				System.err.println(e);
 			}
 		}
@@ -214,9 +239,9 @@ public class Planetside2API {
 		JSONObject json = new JSONObject(data);
 		chara.name_first = json.getJSONArray("character_list").getJSONObject(0).getJSONObject("name").getString("first");
 		int returned = json.getInt("returned");
-		log.info("parseCharacter returned:"+returned);
+		log.debug("parseCharacter returned:"+returned);
 		if(returned==0) {
-			System.out.println("Character Not found. returned=0");
+			log.info("Character Not found. returned=0");
 			chara = null;
 		}
 		return chara;
@@ -306,7 +331,7 @@ public class Planetside2API {
 	 * @return
 	 * @throws Exception
 	 */
-	public static String getOutfitName(String id) throws Exception {
+	public static String getOutfitName(String id) {
 		if(id.equals("")||id==null||id.equals("0")){
 			return "UNKNOW";
 		}
@@ -322,7 +347,7 @@ public class Planetside2API {
 		
 		JSONObject json = new JSONObject(data);
 		int returned = json.getInt("returned");
-		log.info("parseOutfit returned:"+returned);
+		log.debug("parseOutfit returned:"+returned);
 		if(returned==0){
 			return null;
 		}
@@ -398,10 +423,9 @@ public class Planetside2API {
 				
 					weapon_list.add(wp);
 				}
-				log.debug(wp.toString());
+				log.trace(wp.toString());
 			} catch(Exception e) {
-				log.debug(e.getMessage());
-				log.debug(json.getJSONArray("item_list").getJSONObject(i).toString());
+				log.debug(e.getMessage()+json.getJSONArray("item_list").getJSONObject(i).toString());
 //				weapon_list.add(wp);
 			}
 		}
@@ -503,5 +527,21 @@ public class Planetside2API {
 
 		}
 		return datatype_list;
+	}
+	
+	public static String getZoneName(int zone_id) {
+		switch(zone_id) {
+		case 2:
+			return "Indar";
+		case 4:
+			return "Hossin";
+		case 6:
+			return "Amerish";
+		case 8:
+			return "Esamir";
+		default:
+			break;
+		}
+		return String.valueOf(zone_id);
 	}
 }

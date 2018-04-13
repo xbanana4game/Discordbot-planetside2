@@ -1,11 +1,6 @@
 *.class
-/ps2bot.log
+/*.log
 /discord.conf
 *.jar
-target/maven-archiver/pom.properties
-/.settings
 /target
-/.classpath
-/.project
-/datatype.csv.txt
-/weapon.csv.txt
+/*.csv.txt

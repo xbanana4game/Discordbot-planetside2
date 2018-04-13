@@ -18,7 +18,10 @@
 			</pattern>
 		</encoder>
 	</appender>
-
+     <logger name="jp.banana.discordbot" level="INFO" additivity="false">
+     	 <appender-ref ref="STDOUT" />
+	     <appender-ref ref="FILE" />
+     </logger>
      <logger name="jp.banana.planetside2.api" level="INFO" additivity="false">
      	 <appender-ref ref="STDOUT" />
 	     <appender-ref ref="FILE" />

@@ -8,14 +8,13 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import jp.banana.discordbot.BotConfig;
 import jp.banana.discordbot.OutputFacilityControlLog;
 import jp.banana.discordbot.OutputVehicleDestroyLog;
 import jp.banana.planetside2.api.Planetside2API;
 import jp.banana.planetside2.entity.Datatype;
 import jp.banana.planetside2.streaming.Planetside2EventStreaming;
 import jp.banana.planetside2.streaming.StreamingCommandBuilder;
-import jp.banana.planetside2.streaming.event.HeartbeatEvent;
 import de.btobastian.javacord.DiscordAPI;
 import de.btobastian.javacord.entities.Channel;
 import de.btobastian.javacord.entities.message.Message;
@@ -82,13 +81,11 @@ public class Planetside2BotCommand implements MessageCreateListener {
         		message.reply("車両破壊ログ出力中");
         	} else {
             	runningVehcleDestroy = true;
-            	Channel ouput_channel = message.getChannelReceiver();
-            	output_channel_list.add(ouput_channel);
             	vehcleDestroyListener = new OutputVehicleDestroyLog();
-            	vehcleDestroyListener.addChannel(ouput_channel);
             	client.addListener(vehcleDestroyListener);
             	client.sendCommand(vehcleDestroyListener.getCommandText());
-            	message.reply("車両破壊ログ出力開始");
+            	String outfitName = Planetside2API.getOutfitName(BotConfig.getSingleton().getOutfitID());
+            	message.reply("車両破壊ログ出力開始 OUTFIT: "+outfitName);
         	}
         }
         

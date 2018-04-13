@@ -61,6 +61,6 @@ public class ApiCommandBuilderTest {
 	
 	@Test
 	public void test9(){
-		
+		assertEquals("a","a");
 	}
 }

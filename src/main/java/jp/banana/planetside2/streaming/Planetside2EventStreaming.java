@@ -81,16 +81,16 @@ public class Planetside2EventStreaming extends Thread {
 		
 		synchronized (listeners) {
 			if(event_name.equals("VehicleDestroy")) {
-				logger.info("[Receive]:VehicleDestroy");
 				VehicleDestroy vd = parseVehicleDestroy(message);
+				logger.debug(vd.toString());
 				for(EventListener l:listeners) {
 					if(l instanceof VehicleDestroyEvent) {
 						((VehicleDestroyEvent) l).event(vd);
 					}
 				}
 			} else if(event_name.equals("FacilityControl")) {
-				logger.info("[Receive]:FacilityControl");
 				FacilityControl fc = parseFacilityControl(message);
+				logger.debug(fc.toString());
 				for(EventListener l:listeners) {
 					if(l instanceof FacilityControlEvent) {
 						((FacilityControlEvent) l).event(fc);
@@ -98,7 +98,11 @@ public class Planetside2EventStreaming extends Thread {
 				}
 			} else if(type.equals("heartbeat")){
 				boolean online = parseHeartBeat("EventServerEndpoint_Connery_1", message);
-				logger.info("[Receive]:heartbeat EventServerEndpoint_Connery_1:"+online);
+				if(!online) {
+					logger.error("[Receive]:heartbeat EventServerEndpoint_Connery_1:"+online);
+				} else {
+					logger.debug("[Receive]:heartbeat EventServerEndpoint_Connery_1:"+online);
+				}
 				for(EventListener l:listeners) {
 					if(l instanceof HeartbeatEvent) {
 						((HeartbeatEvent) l).event(online);
@@ -108,6 +112,8 @@ public class Planetside2EventStreaming extends Thread {
 				logger.info("[Receive]:" + message);
 			}
 		}
+		
+		logger.debug("[END]\n");
     }
     
 	public void run() {

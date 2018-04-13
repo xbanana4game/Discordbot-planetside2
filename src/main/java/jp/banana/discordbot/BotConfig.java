@@ -1,5 +1,6 @@
 package jp.banana.discordbot;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
@@ -7,18 +8,31 @@ import java.util.Properties;
 
 public class BotConfig {
 	private static BotConfig singleton = new BotConfig();
+	private final String CONFIG_FILE = "discord.conf";
+	private String token;
+	private String serviceID;
+	private String outfitID;
 	
 	private BotConfig() {
+		checkConfig();
 		readConfig();
+	}
+	
+	public boolean checkConfig() {
+		File f = new File(CONFIG_FILE);
+		if(f.exists()) {
+			return true;
+		} else {
+			System.err.println("configfile not exist. "+CONFIG_FILE);
+		}
+		return false;
 	}
 
 	public static BotConfig getSingleton() {
 		return singleton;
 	}
 
-	private String token;
-	private String serviceID;
-	private String outfitID;
+
 	
 	public String getToken() {
 		return token;
@@ -33,11 +47,10 @@ public class BotConfig {
 	}
 
 	private boolean readConfig() {
-	    String configFile = "discord.conf";
 	    Properties prop = new Properties();
 
 	    try {
-	      prop.load(new FileInputStream(configFile));
+	      prop.load(new FileInputStream(CONFIG_FILE));
 	    } catch (IOException e) {
 	      e.printStackTrace();
 	      return false;
