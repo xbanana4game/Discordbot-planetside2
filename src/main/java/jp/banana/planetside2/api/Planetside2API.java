@@ -52,7 +52,8 @@ public class Planetside2API {
 	public static String getAPIString(String page_url) {
 		URL url = null;
 		String line = null;
-		log.debug("getAPIString() GET: "+page_url);
+		//FIX Check [A Valid Service ID]
+		log.info("GET: "+page_url);
 		try {
 			url = new URL(page_url);
 			URLConnection conn;
@@ -193,9 +194,7 @@ public class Planetside2API {
 				fc.add(facility);
 				log.trace(fc.toString());
 			} catch (Exception e) {
-				log.error(e.getMessage());
-				log.info(json.getJSONArray("map_region_list").getJSONObject(i).toString());
-//				System.err.println(e);
+				log.debug(e.getMessage()+json.getJSONArray("map_region_list").getJSONObject(i).toString());
 			}
 		}
 		return fc;
@@ -236,14 +235,20 @@ public class Planetside2API {
 	public static CharacterInfo parseCharacter(String data) {
 		CharacterInfo chara = new CharacterInfo();
 		
-		JSONObject json = new JSONObject(data);
-		chara.name_first = json.getJSONArray("character_list").getJSONObject(0).getJSONObject("name").getString("first");
-		int returned = json.getInt("returned");
-		log.debug("parseCharacter returned:"+returned);
-		if(returned==0) {
-			log.info("Character Not found. returned=0");
+		try{
+			JSONObject json = new JSONObject(data);
+			chara.name_first = json.getJSONArray("character_list").getJSONObject(0).getJSONObject("name").getString("first");
+			int returned = json.getInt("returned");
+			log.debug("returned:"+returned);
+			if(returned==0) {
+				log.info("Character Not found. returned=0");
+				chara = null;
+			}
+		} catch (Exception e) {
+			log.error(e.getMessage()+data);
 			chara = null;
 		}
+
 		return chara;
 	}
 	

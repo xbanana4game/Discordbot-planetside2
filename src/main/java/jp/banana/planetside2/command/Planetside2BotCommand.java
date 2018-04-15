@@ -51,7 +51,7 @@ public class Planetside2BotCommand implements MessageCreateListener {
     	}
 		
 		if (message.getContent().equalsIgnoreCase("!ps2bot help")) {
-			message.reply("!ps2bot outfitlog/facility/facility.csv/weapon.csv/datatype.csv");
+			message.reply("!ps2bot outfitlog/facility/clearCommand/facility.csv/weapon.csv/datatype.csv");
 			message.reply("!ps2bot help/ping/debug/stat/join/disconnect");
 		}
 		
@@ -169,7 +169,7 @@ public class Planetside2BotCommand implements MessageCreateListener {
         	if(runningVehcleDestroy) {
         		String command = new StreamingCommandBuilder().clearCommand().build();
         		client.sendCommand(command);
-        		runningVehcleDestroy = false;
+//        		runningVehcleDestroy = false;
         	}
         }
         
